@@ -17,15 +17,29 @@ fn handle_stream(mut socket: TcpStream) {
     println!("{now} => {addr:?}");
 
     let mut buffer = [0; 1024];
-    let bytes_read = socket.read(&mut buffer).unwrap();
-    println!("Read {bytes_read} bytes!");
-
-    let message = String::from_utf8_lossy(&buffer[..bytes_read]);
-    println!("received: {}", message);
-
-    if message.trim() == "PING" {
-        socket.write_all(b"PONG").unwrap();
-    } else {
-        socket.write_all(format!("{message}").as_bytes()).unwrap();
+    let mut request = Vec::new();
+    loop {
+        let bytes_read = socket.read(&mut buffer).unwrap();
+        if bytes_read == 0 {
+            return;
+        }
+        request.extend(&buffer[..bytes_read]);
+        if request.windows(4).any(|w| w == b"\r\n\r\n") || request.windows(2).any(|w| w == b"\n\n")
+        {
+            break;
+        }
     }
+    parse_request(&request);
+}
+
+fn parse_request(request: &Vec<u8>) {
+    let request_string = String::from_utf8_lossy(&request);
+    println!("### HTTP Request ###\n\n{}", request_string);
+
+    let lines = request_string.split("\n").next().unwrap();
+    let mut parts = lines.split_whitespace();
+
+    let method = parts.next().unwrap();
+    let path = parts.next().unwrap();
+    println!("{method} - {path}")
 }

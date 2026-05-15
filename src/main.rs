@@ -1,6 +1,9 @@
 use chrono::Local;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::{TcpListener, TcpStream};
+
+mod request;
+use request::HttpRequest;
 
 const PORT: u16 = 3000;
 fn main() {
@@ -17,29 +20,19 @@ fn handle_stream(mut socket: TcpStream) {
     println!("{now} => {addr:?}");
 
     let mut buffer = [0; 1024];
-    let mut request = Vec::new();
+    let mut stream = Vec::new();
     loop {
         let bytes_read = socket.read(&mut buffer).unwrap();
         if bytes_read == 0 {
             return;
         }
-        request.extend(&buffer[..bytes_read]);
-        if request.windows(4).any(|w| w == b"\r\n\r\n") || request.windows(2).any(|w| w == b"\n\n")
-        {
+        stream.extend(&buffer[..bytes_read]);
+        if stream.windows(4).any(|w| w == b"\r\n\r\n") || stream.windows(2).any(|w| w == b"\n\n") {
             break;
         }
     }
-    parse_request(&request);
-}
-
-fn parse_request(request: &Vec<u8>) {
-    let request_string = String::from_utf8_lossy(&request);
-    println!("### HTTP Request ###\n\n{}", request_string);
-
-    let lines = request_string.split("\n").next().unwrap();
-    let mut parts = lines.split_whitespace();
-
-    let method = parts.next().unwrap();
-    let path = parts.next().unwrap();
-    println!("{method} - {path}")
+    let request = HttpRequest::new(&stream);
+    println!("{} - {}", request.method, request.path);
+    println!("{:?}", request.headers);
+    println!("{}", request.body)
 }

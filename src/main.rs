@@ -1,29 +1,31 @@
-use std::io::{Read, Write};
-use std::net::TcpListener;
 use chrono::Local;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
 
 const PORT: u16 = 3000;
 fn main() {
     let listener = TcpListener::bind(format!("127.0.0.1:{}", PORT)).unwrap();
 
-    match listener.accept() {
-        Ok((mut socket, addr)) => {
-            let now = Local::now().format("%Y-%m-%d %H:%M:%S");
-            println!("{now} => {addr:?}");
+    for stream in listener.incoming() {
+        handle_stream(stream.unwrap());
+    }
+}
 
-            let mut buffer = [0; 1024];
-            let bytes_read = socket.read(&mut buffer).unwrap();
-            println!("Read {bytes_read} bytes!");
+fn handle_stream(mut socket: TcpStream) {
+    let now = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let addr = socket.peer_addr().unwrap();
+    println!("{now} => {addr:?}");
 
-            let message = String::from_utf8_lossy(&buffer[..bytes_read]);
-            println!("received: {}", message);
+    let mut buffer = [0; 1024];
+    let bytes_read = socket.read(&mut buffer).unwrap();
+    println!("Read {bytes_read} bytes!");
 
-            if message.trim() == "PING" {
-                socket.write_all(b"PONG").unwrap();
-            } else {
-                socket.write_all(format!("{message}").as_bytes()).unwrap();
-            }
-        }
-        Err(e) => println!("couldn't get client: {e:?}"),
+    let message = String::from_utf8_lossy(&buffer[..bytes_read]);
+    println!("received: {}", message);
+
+    if message.trim() == "PING" {
+        socket.write_all(b"PONG").unwrap();
+    } else {
+        socket.write_all(format!("{message}").as_bytes()).unwrap();
     }
 }

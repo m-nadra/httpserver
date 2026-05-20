@@ -12,7 +12,7 @@ impl HttpResponse {
         }
     }
 
-    pub fn to_string(self) -> String {
+    pub fn to_string(&self) -> String {
         let mut response_string = String::new();
         let status_message = status_messages::get_status_message(self.status);
 
@@ -21,10 +21,9 @@ impl HttpResponse {
             return response_string;
         }
         response_string.push_str(&format!("HTTP/1.1 {} {}\r\n", self.status, status_message));
-        response_string.push_str(&format!("Content-Length: {}\r\n", self.body.len() + 4));
+        response_string.push_str(&format!("Content-Length: {}\r\n", self.body.len()));
         response_string.push_str("\r\n");
         response_string.push_str(&self.body);
-        response_string.push_str("\r\n\r\n");
         response_string
     }
 }

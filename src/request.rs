@@ -8,10 +8,8 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
-    pub fn new(request: &[u8]) -> Self {
-        let request_string = String::from_utf8_lossy(request);
-
-        let mut lines = request_string.split("\n");
+    pub fn new(request: String) -> Self {
+        let mut lines = request.split("\n");
         let mut parts = lines.next().unwrap().split_whitespace();
         let mut headers = HashMap::new();
         for line in lines.by_ref() {

@@ -1,14 +1,18 @@
 use crate::status_messages;
+use std::collections::HashMap;
+
 pub struct HttpResponse {
     pub status: u16,
-    pub body: String,
+    body: String,
+    pub headers: HashMap<String, String>,
 }
 
 impl HttpResponse {
     pub fn new(status: u16) -> Self {
         Self {
             status,
-            body: "<html>Hello world!</html>".to_owned(),
+            body: "".to_owned(),
+            headers: HashMap::new(),
         }
     }
 
@@ -21,9 +25,26 @@ impl HttpResponse {
             return response_string;
         }
         response_string.push_str(&format!("HTTP/1.1 {} {}\r\n", self.status, status_message));
-        response_string.push_str(&format!("Content-Length: {}\r\n", self.body.len()));
+        for header in &self.headers {
+            response_string.push_str(&format!("{}: {}\r\n", header.0, header.1));
+        }
         response_string.push_str("\r\n");
         response_string.push_str(&self.body);
         response_string
+    }
+
+    pub fn send_json(&mut self, json: String) {
+        self.body = json;
+        self.headers
+            .insert("Content-Length".to_string(), self.body.len().to_string());
+        self.headers
+            .insert("Content-Type".to_string(), "application/json".to_owned());
+    }
+    pub fn send_html(&mut self, html: String) {
+        self.body = html;
+        self.headers
+            .insert("Content-Length".to_string(), self.body.len().to_string());
+        self.headers
+            .insert("Content-Type".to_string(), "text/html".to_owned());
     }
 }

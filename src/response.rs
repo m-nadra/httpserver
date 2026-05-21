@@ -31,8 +31,8 @@ impl HttpResponse {
         response_string.push_str(&self.body);
         response_string
     }
-    pub fn send_json(&mut self, json: impl Into<String>) {
-        self.body = json.into();
+    pub fn send_json(&mut self, json: serde_json::Value) {
+        self.body = json.to_string();
         self.headers
             .insert("Content-Length".to_string(), self.body.len().to_string());
         self.headers

@@ -1,25 +1,14 @@
-mod request;
-use request::HttpRequest;
-
-mod response;
-use response::HttpResponse;
-
-mod router;
-use router::Router;
-
-mod status_messages;
-
-mod socket;
+use httpserver::Router;
 
 const PORT: u16 = 3000;
 
 fn main() {
     let mut router = Router::default();
-    router.get("/".to_owned(), |_, res| {
-        res.send_html("<h1>Default route</h1>".to_owned());
+    router.get("/", |_, res| {
+        res.send_html("<h1>Default route</h1>");
     });
-    router.get("/json".to_owned(), |_, res| {
-        res.send_json("{\"message\": \"Hello World!\"}".to_owned());
+    router.get("/json", |_, res| {
+        res.send_json("{\"message\": \"Hello World!\"}");
     });
     router.listen(PORT);
 }

@@ -31,15 +31,15 @@ impl HttpResponse {
         response_string.push_str(&self.body);
         response_string
     }
-    pub fn send_json(&mut self, json: String) {
-        self.body = json;
+    pub fn send_json(&mut self, json: impl Into<String>) {
+        self.body = json.into();
         self.headers
             .insert("Content-Length".to_string(), self.body.len().to_string());
         self.headers
             .insert("Content-Type".to_string(), "application/json".to_owned());
     }
-    pub fn send_html(&mut self, html: String) {
-        self.body = html;
+    pub fn send_html(&mut self, html: impl Into<String>) {
+        self.body = html.into();
         self.headers
             .insert("Content-Length".to_string(), self.body.len().to_string());
         self.headers

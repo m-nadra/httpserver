@@ -17,10 +17,10 @@ pub struct Router {
 }
 
 impl Router {
-    pub fn get(&mut self, path: String, function: FunctionHandler) {
+    pub fn get(&mut self, path: impl Into<String>, function: FunctionHandler) {
         self.routes.push(Route {
             method: "GET".to_owned(),
-            path,
+            path: path.into(),
             function,
         });
     }

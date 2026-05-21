@@ -1,4 +1,7 @@
+use crate::socket;
 use crate::{HttpRequest, HttpResponse};
+use chrono::Local;
+use std::net::TcpListener;
 
 type FunctionHandler = fn(HttpRequest, &mut HttpResponse);
 
@@ -9,7 +12,7 @@ struct Route {
 }
 
 #[derive(Default)]
-struct Router {
+pub struct Router {
     routes: Vec<Route>,
 }
 
@@ -34,17 +37,20 @@ impl Router {
         }
         Err(status)
     }
+    pub fn listen(&self, port: u16) {
+        let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
+
+        for stream in listener.incoming() {
+            let stream = stream.unwrap();
+            let now = Local::now().format("%Y-%m-%d %H:%M:%S");
+            let addr = stream.peer_addr().unwrap();
+            println!("{now} => {addr:?}");
+            socket::handle_stream(stream, self);
+        }
+    }
 }
 
-pub fn router(request: HttpRequest, response: &mut HttpResponse) {
-    let mut router = Router::default();
-    router.get("/".to_owned(), |_, res| {
-        res.send_html("<h1>Default route</h1>".to_owned());
-    });
-    router.get("/json".to_owned(), |_, res| {
-        res.send_json("{\"message\": \"Hello World!\"}".to_owned());
-    });
-
+pub fn route_to_endpoint(request: HttpRequest, response: &mut HttpResponse, router: &Router) {
     match router.find_endpoint(&request.path, &request.method) {
         Ok(func) => func(request, response),
         Err(code) => response.status = code,

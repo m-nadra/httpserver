@@ -1,6 +1,6 @@
 use crate::{HttpRequest, HttpResponse};
 
-type FunctionHandler = fn(&HttpRequest, &mut HttpResponse);
+type FunctionHandler = fn(HttpRequest, &mut HttpResponse);
 
 struct Route {
     path: String,
@@ -8,14 +8,12 @@ struct Route {
     function: FunctionHandler,
 }
 
+#[derive(Default)]
 struct Router {
     routes: Vec<Route>,
 }
 
 impl Router {
-    pub fn default() -> Self {
-        Self { routes: Vec::new() }
-    }
     pub fn get(&mut self, path: String, function: FunctionHandler) {
         self.routes.push(Route {
             method: "GET".to_owned(),
@@ -38,7 +36,7 @@ impl Router {
     }
 }
 
-pub fn router(request: &HttpRequest, response: &mut HttpResponse) {
+pub fn router(request: HttpRequest, response: &mut HttpResponse) {
     let mut router = Router::default();
     router.get("/".to_owned(), |_, res| {
         res.send_html("<h1>Default route</h1>".to_owned());

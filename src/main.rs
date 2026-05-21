@@ -30,9 +30,9 @@ fn handle_stream(mut socket: TcpStream) {
     let stream = read_from_socket(&mut socket);
 
     let request = HttpRequest::new(stream);
-    let mut response = HttpResponse::new(200);
+    let mut response = HttpResponse::default();
 
-    routes::router(&request, &mut response);
+    routes::router(request, &mut response);
 
     socket.write_all(response.to_string().as_bytes()).unwrap();
 }

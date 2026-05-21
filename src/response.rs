@@ -1,6 +1,7 @@
 use crate::status_messages;
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct HttpResponse {
     pub status: u16,
     body: String,
@@ -8,14 +9,12 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
-    pub fn new(status: u16) -> Self {
+    pub fn default() -> Self {
         Self {
-            status,
-            body: "".to_owned(),
-            headers: HashMap::new(),
+            status: 200,
+            ..Default::default()
         }
     }
-
     pub fn to_string(&self) -> String {
         let mut response_string = String::new();
         let status_message = status_messages::get_status_message(self.status);
@@ -32,7 +31,6 @@ impl HttpResponse {
         response_string.push_str(&self.body);
         response_string
     }
-
     pub fn send_json(&mut self, json: String) {
         self.body = json;
         self.headers

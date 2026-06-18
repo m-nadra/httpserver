@@ -14,7 +14,7 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
 
     router::route_to_endpoint(request, &mut response, router);
 
-    socket.write_all(response.to_string().as_bytes()).unwrap();
+    socket.write_all(&response.to_bytes()).unwrap();
 }
 
 fn read_from_socket(socket: &mut TcpStream) -> String {

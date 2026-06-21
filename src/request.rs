@@ -3,6 +3,7 @@ use std::collections::HashMap;
 pub struct HttpRequest {
     pub method: String,
     pub path: String,
+    pub version: String,
     pub query: HashMap<String, String>,
     pub headers: HashMap<String, String>,
     pub body: String,
@@ -32,6 +33,7 @@ impl HttpRequest {
 
         let method = request_start_line[0].to_string();
         let (path, query) = HttpRequest::extract_query_params(request_start_line[1]);
+        let version = request_start_line[2].to_string();
 
         // Extract request headers
         let mut headers = HashMap::new();
@@ -48,6 +50,7 @@ impl HttpRequest {
         Self {
             method,
             path,
+            version,
             headers,
             body,
             query,
@@ -83,7 +86,7 @@ mod tests {
     #[test]
     fn invalid_path() {
         let (mut path, mut query);
-        
+
         (path, query) = HttpRequest::extract_query_params(&"/name/profile?".to_string());
         assert_eq!(path, "/name/profile".to_string());
         assert_eq!(query.len(), 0);

@@ -26,7 +26,7 @@ fn main() {
         res.send_file("pliki/index.xml");
     });
     router.get("/query", |req, res| {
-        if let Ok(query_params) = serde_json::to_value(req.query) {
+        if let Ok(query_params) = serde_json::to_value(&req.query) {
             res.send_json(query_params);
         } else {
             res.send_json(json!({"message": "Invalid query"}));

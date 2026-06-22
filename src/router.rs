@@ -1,5 +1,6 @@
 use crate::socket;
 use crate::{HttpRequest, HttpResponse};
+use std::collections::HashMap;
 use std::net::TcpListener;
 
 type FunctionHandler = fn(&HttpRequest, &mut HttpResponse);
@@ -13,28 +14,19 @@ struct Route {
 #[derive(Default)]
 pub struct Router {
     routes: Vec<Route>,
+    statics: HashMap<String, String>,
 }
 
 impl Router {
+    pub fn mount_static(&mut self, path: impl Into<String>, directory: impl Into<String>) {
+        self.statics.insert(path.into(), directory.into());
+    }
     pub fn get(&mut self, path: impl Into<String>, function: FunctionHandler) {
         self.routes.push(Route {
             method: "GET".to_owned(),
             path: path.into(),
             function,
         });
-    }
-    pub fn find_endpoint(&self, path: &String, method: &String) -> Result<FunctionHandler, u16> {
-        let mut status = 404;
-
-        for route in &self.routes {
-            if route.path == *path {
-                status = 405;
-                if route.method == *method {
-                    return Ok(route.function);
-                }
-            }
-        }
-        Err(status)
     }
     pub fn listen(&self, port: u16) {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
@@ -47,8 +39,30 @@ impl Router {
 }
 
 pub fn route_to_endpoint(request: &HttpRequest, response: &mut HttpResponse, router: &Router) {
-    match router.find_endpoint(&request.path, &request.method) {
-        Ok(func) => func(request, response),
-        Err(code) => response.status = code,
-    };
+    let path = &request.path;
+    let method = &request.method;
+    
+    // Static content serving
+    for (route, dir) in router.statics.iter() {
+        if path.starts_with(route) {
+            let mut file_path = dir.clone();
+            file_path.push_str(&path.clone().split_off(route.len()));
+            response.send_file(file_path);
+            return;
+        }
+    }
+
+    // Endpoint matching
+    let mut status = 404;
+
+    for route in &router.routes {
+        if route.path == *path {
+            status = 405;
+            if route.method == *method {
+                (route.function)(request, response);
+                break;
+            }
+        }
+    }
+    response.status = status;
 }

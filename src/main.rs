@@ -5,6 +5,9 @@ const PORT: u16 = 3000;
 
 fn main() {
     let mut router = Router::default();
+
+    router.mount_static("/static", "pliki");
+
     router.get("/", |_, res| {
         res.send_html("pliki/index.html");
     });

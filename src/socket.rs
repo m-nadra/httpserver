@@ -1,6 +1,7 @@
 use crate::router;
 use crate::{HttpRequest, HttpResponse, Router};
 use chrono::Local;
+use std::fs::File;
 use std::net::TcpStream;
 
 use std::io::{Read, Write};
@@ -20,7 +21,7 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
     router::route_to_endpoint(&request, &mut response, router);
 
     // Combined Log Format
-    println!(
+    let access_log = format!(
         "{} - - [{}] \"{}\" {} {} {} {}", // TODO! Add authorized user instead second hyphen
         socket.peer_addr().unwrap().ip(),
         Local::now().format("%d/%b/%Y:%H:%M:%S %z"),
@@ -42,6 +43,19 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
             .clone()
     );
 
+    println!("{access_log}");
+
+    const ACCESS_LOG_FILE_PATH: &str = "access_log.txt";
+    if let Ok(mut access_log_file) = File::options()
+        .append(true)
+        .create(true)
+        .open(ACCESS_LOG_FILE_PATH)
+    {
+        access_log_file.write_all(&access_log.into_bytes()).unwrap();
+        access_log_file.write("\n".as_bytes()).unwrap();
+    } else {
+        println!("Can't write log to {ACCESS_LOG_FILE_PATH}")
+    }
     socket.write_all(&response.to_bytes()).unwrap();
 }
 

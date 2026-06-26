@@ -1,8 +1,8 @@
+use crate::response::Disposition;
 use crate::socket;
 use crate::{HttpRequest, HttpResponse};
 use std::collections::HashMap;
 use std::net::TcpListener;
-
 type FunctionHandler = fn(&HttpRequest, &mut HttpResponse);
 
 struct Route {
@@ -41,13 +41,15 @@ impl Router {
 pub fn route_to_endpoint(request: &HttpRequest, response: &mut HttpResponse, router: &Router) {
     let path = &request.path;
     let method = &request.method;
-    
+
     // Static content serving
     for (route, dir) in router.statics.iter() {
         if path.starts_with(route) {
             let mut file_path = dir.clone();
             file_path.push_str(&path.clone().split_off(route.len()));
-            response.send_file(file_path);
+            if response.send_file(file_path, Disposition::Inline).is_err() {
+                response.status = 404;
+            }
             return;
         }
     }
@@ -59,6 +61,7 @@ pub fn route_to_endpoint(request: &HttpRequest, response: &mut HttpResponse, rou
         if route.path == *path {
             status = 405;
             if route.method == *method {
+                status = 200;
                 (route.function)(request, response);
                 break;
             }

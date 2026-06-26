@@ -1,4 +1,4 @@
-use httpserver::Router;
+use httpserver::{Disposition, Router};
 use serde_json::json;
 
 const PORT: u16 = 3000;
@@ -9,7 +9,7 @@ fn main() {
     router.mount_static("/static", "examples/content");
 
     router.get("/", |_, res| {
-        res.send_html("examples/content/index.html");
+        res.send_html("<h1>Hello World!</h1>");
     });
     router.get("/json", |_, res| {
         res.send_json(json!({
@@ -17,16 +17,20 @@ fn main() {
         }));
     });
     router.get("/plik", |_, res| {
-        res.send_attachment("examples/content/plik.txt");
+        res.send_file("examples/content/plik.txt", Disposition::Attachment)
+            .unwrap();
     });
     router.get("/text", |_, res| {
         res.send_text("Message to send");
     });
     router.get("/pdf", |_, res| {
-        res.send_file("examples/content/example.pdf");
+        res.send_file("examples/content/example.pdf", Disposition::Inline)
+            .unwrap();
     });
     router.get("/xml", |_, res| {
-        res.send_file("examples/content/index.xml");
+        if res.send_file("examples/content/index.xml", Disposition::Inline).is_err() {
+            res.send_text("File not found!");
+        }
     });
     router.get("/query", |req, res| {
         if let Ok(query_params) = serde_json::to_value(&req.query) {

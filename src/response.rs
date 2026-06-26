@@ -1,7 +1,23 @@
 use crate::mime::get_mime_type;
 use crate::status_messages;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs;
+
+pub enum Disposition {
+    Inline,
+    Attachment,
+}
+
+impl Disposition {
+    fn value(&self) -> String {
+        let value = match *self {
+            Disposition::Inline => "inline",
+            Disposition::Attachment => "attachment",
+        };
+        value.to_string()
+    }
+}
 
 #[derive(Default)]
 pub struct HttpResponse {
@@ -49,28 +65,30 @@ impl HttpResponse {
         self.headers
             .insert("Content-Type".to_string(), "application/json".to_owned());
     }
-    pub fn send_html(&mut self, path: impl Into<String>) {
-        self.body = fs::read(path.into()).expect("Can't access file");
+    pub fn send_html(&mut self, content: impl Into<Vec<u8>>) {
+        self.body = content.into();
         self.headers
             .insert("Content-Length".to_string(), self.body.len().to_string());
         self.headers
             .insert("Content-Type".to_string(), "text/html".to_owned());
     }
-    pub fn send_file(&mut self, path: impl Into<String>) {
+    pub fn send_file(
+        &mut self,
+        path: impl Into<String>,
+        render_type: Disposition,
+    ) -> Result<(), Box<dyn Error>> {
         let path = path.into();
-        self.body = fs::read(&path).expect("Can't access file");
+        self.body = fs::read(&path)?;
         self.headers
             .insert("Content-Length".to_string(), self.body.len().to_string());
 
         let file_extesion = path.split(".").last().unwrap();
         self.headers
             .insert("Content-Type".to_string(), get_mime_type(file_extesion));
-    }
-    pub fn send_attachment(&mut self, path: impl Into<String>) {
-        self.body = fs::read(path.into()).expect("Can't access file");
+
         self.headers
-            .insert("Content-Length".to_string(), self.body.len().to_string());
-        self.headers
-            .insert("Content-Disposition".to_string(), "attachment".to_owned());
+            .insert("Content-Disposition".to_string(), render_type.value());
+
+        Ok(())
     }
 }

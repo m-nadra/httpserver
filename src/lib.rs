@@ -2,6 +2,7 @@ mod request;
 use request::HttpRequest;
 
 mod response;
+pub use response::Disposition;
 use response::HttpResponse;
 
 pub mod router;

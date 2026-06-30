@@ -1,4 +1,3 @@
-use crate::router;
 use crate::{HttpRequest, HttpResponse, Router};
 use chrono::Local;
 use std::fs::File;
@@ -18,7 +17,16 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
     let request = HttpRequest::new(stream);
     let mut response = HttpResponse::default();
 
-    router::route_to_endpoint(&request, &mut response, router);
+    if let Some(path) = router.get_static_content_path(&request.path) {
+        response
+            .send_file(path, crate::Disposition::Inline)
+            .unwrap_or_else(|_| response.status = 404);
+    } else {
+        match router.get_function_handler(&request.path, &request.method) {
+            Ok(func) => func(&request, &mut response),
+            Err(code) => response.status = code,
+        }
+    }
 
     // Combined Log Format
     let access_log = format!(
@@ -52,7 +60,7 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
         .open(ACCESS_LOG_FILE_PATH)
     {
         access_log_file.write_all(&access_log.into_bytes()).unwrap();
-        access_log_file.write("\n".as_bytes()).unwrap();
+        access_log_file.write_all("\n".as_bytes()).unwrap();
     } else {
         println!("Can't write log to {ACCESS_LOG_FILE_PATH}")
     }

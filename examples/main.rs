@@ -28,9 +28,8 @@ fn main() {
             .unwrap();
     });
     router.get("/xml", |_, res| {
-        if res.send_file("examples/content/index.xml", Disposition::Inline).is_err() {
-            res.send_text("File not found!");
-        }
+        res.send_file("examples/content/index.xml", Disposition::Inline)
+            .unwrap_or_else(|_| res.send_text("File not found"))
     });
     router.get("/query", |req, res| {
         if let Ok(query_params) = serde_json::to_value(&req.query) {

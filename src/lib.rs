@@ -12,3 +12,9 @@ mod mime;
 mod status_messages;
 
 mod socket;
+
+pub mod server;
+pub use server::Server;
+
+mod logger;
+use logger::Logger;

@@ -1,9 +1,8 @@
-use httpserver::{Disposition, Router};
+use httpserver::{Disposition, Router, Server};
 use serde_json::json;
 
-const PORT: u16 = 3000;
-
 fn main() {
+    let mut app = Server::create();
     let mut router = Router::default();
 
     router.mount_static("/static", "examples/content");
@@ -38,5 +37,7 @@ fn main() {
             res.send_json(json!({"message": "Invalid query"}));
         }
     });
-    router.listen(PORT);
+    
+    app.mount(router);
+    app.listen("0.0.0.0:3000").unwrap();
 }

@@ -1,7 +1,5 @@
-use crate::socket;
 use crate::{HttpRequest, HttpResponse};
 use std::collections::HashMap;
-use std::net::TcpListener;
 type FunctionHandler = fn(&HttpRequest, &mut HttpResponse);
 
 struct Route {
@@ -26,14 +24,6 @@ impl Router {
             path: path.into(),
             function,
         });
-    }
-    pub fn listen(&self, port: u16) {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
-
-        for stream in listener.incoming() {
-            let stream = stream.unwrap();
-            socket::handle_stream(stream, self);
-        }
     }
     pub fn get_function_handler(
         &self,

@@ -1,18 +1,13 @@
 use crate::{HttpRequest, HttpResponse, Router};
 use chrono::Local;
-use std::fs::File;
 use std::net::TcpStream;
 
 use std::io::{Read, Write};
 
 const BUFFER_SIZE: usize = 1024;
 
-pub fn handle_stream(mut socket: TcpStream, router: &Router) {
+pub fn handle_stream(mut socket: TcpStream, router: &Router) -> String {
     let stream = read_from_socket(&mut socket);
-    let request_data = {
-        let end = stream.find("\r\n").unwrap_or(stream.len());
-        String::from(&stream[..end])
-    };
 
     let request = HttpRequest::new(stream);
     let mut response = HttpResponse::default();
@@ -27,13 +22,15 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
             Err(code) => response.status = code,
         }
     }
+    socket.write_all(&response.to_bytes()).unwrap();
 
-    // Combined Log Format
-    let access_log = format!(
-        "{} - - [{}] \"{}\" {} {} {} {}", // TODO! Add authorized user instead second hyphen
+    format!(
+        "{} - - [{}] \"{} {} {}\" {} {} {} {}", // TODO! Add authorized user instead second hyphen
         socket.peer_addr().unwrap().ip(),
         Local::now().format("%d/%b/%Y:%H:%M:%S %z"),
-        request_data,
+        request.method,
+        request.path,
+        request.version,
         response.status,
         response
             .headers
@@ -49,22 +46,7 @@ pub fn handle_stream(mut socket: TcpStream, router: &Router) {
             .get("User-Agent")
             .unwrap_or(&"-".to_string())
             .clone()
-    );
-
-    println!("{access_log}");
-
-    const ACCESS_LOG_FILE_PATH: &str = "access_log.txt";
-    if let Ok(mut access_log_file) = File::options()
-        .append(true)
-        .create(true)
-        .open(ACCESS_LOG_FILE_PATH)
-    {
-        access_log_file.write_all(&access_log.into_bytes()).unwrap();
-        access_log_file.write_all("\n".as_bytes()).unwrap();
-    } else {
-        println!("Can't write log to {ACCESS_LOG_FILE_PATH}")
-    }
-    socket.write_all(&response.to_bytes()).unwrap();
+    )
 }
 
 fn read_from_socket(socket: &mut TcpStream) -> String {

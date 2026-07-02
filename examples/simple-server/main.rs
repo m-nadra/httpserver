@@ -1,11 +1,10 @@
 use httpserver::{Disposition, Router, Server};
 use serde_json::json;
+mod routes;
 
 fn main() {
     let mut app = Server::create();
     let mut router = Router::default();
-
-    router.mount_static("/static", "examples/content");
 
     router.get("/", |_, res| {
         res.send_html("<h1>Hello World!</h1>");
@@ -38,7 +37,9 @@ fn main() {
         }
     });
 
+    app.mount_static("/static", "examples/content");
     app.mount(router);
+    app.mount(routes::some_router());
     app.logger.set_access_file("logs/access.log");
     app.logger.set_error_file("logs/error.log");
     app.listen("0.0.0.0:3000").unwrap();

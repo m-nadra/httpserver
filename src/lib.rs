@@ -18,3 +18,6 @@ pub use server::Server;
 
 mod logger;
 use logger::Logger;
+
+mod statics;
+use statics::Static;

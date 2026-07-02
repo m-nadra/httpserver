@@ -1,59 +1,15 @@
-use crate::{HttpRequest, HttpResponse, Router};
-use chrono::Local;
-use std::net::TcpStream;
-
+use crate::response::HttpResponse;
+use std::error::Error;
 use std::io::{Read, Write};
+use std::net::TcpStream;
 
 const BUFFER_SIZE: usize = 1024;
 
-pub fn handle_stream(mut socket: TcpStream, router: &Router) -> String {
-    let stream = read_from_socket(&mut socket);
-
-    let request = HttpRequest::new(stream);
-    let mut response = HttpResponse::default();
-
-    if let Some(path) = router.get_static_content_path(&request.path) {
-        response
-            .send_file(path, crate::Disposition::Inline)
-            .unwrap_or_else(|_| response.status = 404);
-    } else {
-        match router.get_function_handler(&request.path, &request.method) {
-            Ok(func) => func(&request, &mut response),
-            Err(code) => response.status = code,
-        }
-    }
-    socket.write_all(&response.to_bytes()).unwrap();
-
-    format!(
-        "{} - - [{}] \"{} {} {}\" {} {} {} {}", // TODO! Add authorized user instead second hyphen
-        socket.peer_addr().unwrap().ip(),
-        Local::now().format("%d/%b/%Y:%H:%M:%S %z"),
-        request.method,
-        request.path,
-        request.version,
-        response.status,
-        response
-            .headers
-            .get("Content-Length")
-            .unwrap_or(&"0".to_string()),
-        request
-            .headers
-            .get("Referer")
-            .unwrap_or(&"-".to_string())
-            .clone(),
-        request
-            .headers
-            .get("User-Agent")
-            .unwrap_or(&"-".to_string())
-            .clone()
-    )
-}
-
-fn read_from_socket(socket: &mut TcpStream) -> String {
+pub fn read_request(socket: &mut TcpStream) -> Result<String, Box<dyn Error>> {
     let mut buffer = [0; BUFFER_SIZE];
     let mut stream = Vec::new();
     loop {
-        let bytes_read = socket.read(&mut buffer).unwrap();
+        let bytes_read = socket.read(&mut buffer)?;
         if bytes_read == 0 {
             break;
         }
@@ -62,5 +18,13 @@ fn read_from_socket(socket: &mut TcpStream) -> String {
             break;
         }
     }
-    String::from_utf8(stream).unwrap()
+    Ok(String::from_utf8(stream)?)
+}
+
+pub fn write_response(
+    socket: &mut TcpStream,
+    response: &HttpResponse,
+) -> Result<(), Box<dyn Error>> {
+    socket.write_all(&response.to_bytes())?;
+    Ok(())
 }

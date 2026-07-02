@@ -37,7 +37,9 @@ fn main() {
             res.send_json(json!({"message": "Invalid query"}));
         }
     });
-    
+
     app.mount(router);
+    app.logger.set_access_file("logs/access.log");
+    app.logger.set_error_file("logs/error.log");
     app.listen("0.0.0.0:3000").unwrap();
 }

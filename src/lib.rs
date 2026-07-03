@@ -1,15 +1,12 @@
-mod request;
-use request::HttpRequest;
+mod http_request;
+use http_request::HttpRequest;
 
-mod response;
-pub use response::Disposition;
-use response::HttpResponse;
+mod http_response;
+pub use http_response::Disposition;
+use http_response::HttpResponse;
 
 pub mod router;
 pub use router::Router;
-
-mod mime;
-mod status_messages;
 
 mod socket;
 

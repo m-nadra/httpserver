@@ -60,7 +60,7 @@ impl HttpRequest {
 
 #[cfg(test)]
 mod tests {
-    use crate::request::HttpRequest;
+    use crate::http_request::HttpRequest;
     #[test]
     fn none_query_params() {
         let (path, query) = HttpRequest::extract_query_params(&"/".to_string());

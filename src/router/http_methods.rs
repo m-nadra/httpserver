@@ -1,4 +1,4 @@
-use super::*;
+use super::{Route, Router, FunctionHandler};
 
 impl Router {
     pub fn get(&mut self, path: impl Into<String>, function: FunctionHandler) {

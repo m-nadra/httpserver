@@ -1,4 +1,4 @@
-use crate::response::HttpResponse;
+use crate::http_response::HttpResponse;
 use std::error::Error;
 use std::io::{Read, Write};
 use std::net::TcpStream;

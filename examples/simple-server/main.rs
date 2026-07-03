@@ -21,6 +21,9 @@ fn main() {
     router.get("/text", |_, res| {
         res.send_text("Message to send");
     });
+    router.post("/text", |_, res| {
+        res.send_text("Message to send from POST");
+    });
     router.get("/pdf", |_, res| {
         res.send_file("examples/content/example.pdf", Disposition::Inline)
             .unwrap();

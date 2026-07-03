@@ -1,3 +1,5 @@
+mod http_methods;
+
 use crate::{HttpRequest, HttpResponse};
 type FunctionHandler = fn(&HttpRequest, &mut HttpResponse);
 
@@ -13,13 +15,6 @@ pub struct Router {
 }
 
 impl Router {
-    pub fn get(&mut self, path: impl Into<String>, function: FunctionHandler) {
-        self.routes.push(Route {
-            method: "GET".to_owned(),
-            path: path.into(),
-            function,
-        });
-    }
     pub fn get_function_handler(
         &self,
         path: &String,

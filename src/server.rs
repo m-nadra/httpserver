@@ -36,7 +36,7 @@ impl Server {
 
         for stream in listener.incoming() {
             let stream = stream?;
-            // Add thread spawning
+            // TODO! Add thread spawning
             let message = self.handle_stream(stream);
             self.logger.log_access(message);
         }
@@ -44,13 +44,21 @@ impl Server {
     }
 
     fn handle_stream(&self, mut socket: TcpStream) -> String {
-        let stream = socket::read_request(&mut socket).unwrap();
-
-        let request = HttpRequest::new(stream);
         let mut response = HttpResponse::default();
-        
 
-        // Rewrite routing
+        let Ok(request) = HttpRequest::new(&socket) else {
+            return format!(
+                "{} - - [{}] \"- - -\" {} {} - -",
+                socket.peer_addr().unwrap().ip(),
+                Local::now().format("%d/%b/%Y:%H:%M:%S %z"),
+                response.status,
+                response
+                    .headers
+                    .get("Content-Length")
+                    .unwrap_or(&"0".to_string()),
+            );
+        };
+        // TODO! Rewrite routing
         if let Some(path) = self.statics.get_content_path(&request.path) {
             response
                 .send_file(path, Disposition::Inline)
@@ -67,7 +75,6 @@ impl Server {
                 }
             }
         }
-
         socket::write_response(&mut socket, &response).unwrap();
         format!(
             "{} - - [{}] \"{} {} {}\" {} {} {} {}", // TODO! Add authorized user instead second hyphen
